@@ -2,19 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-13)
+See: .planning/PROJECT.md (updated 2026-02-16)
 
 **Core value:** Quality doesn't degrade as context grows
-**Current focus:** Planning next milestone
+**Current focus:** v2.2 Collaborative Design
 
 ## Current Position
 
-Phase: N/A — between milestones
-Plan: Not started
-Status: Ready to plan next milestone
-Last activity: 2026-02-13 — v2.1 Adversary Agent milestone complete
-
-Progress: Milestone v2.1 shipped. Run `/gsd:new-milestone` to begin next milestone.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-16 — Milestone v2.2 started
 
 ## Performance Metrics
 
@@ -42,6 +40,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-13
-Stopped at: v2.1 milestone complete and archived
+Last session: 2026-02-16
+Stopped at: v2.2 milestone initialization
 Resume file: None

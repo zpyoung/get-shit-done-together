@@ -8,9 +8,16 @@ A meta-prompting, context engineering, and spec-driven development system for Cl
 
 Quality doesn't degrade as context grows. Every session starts fresh with full project context.
 
-## Current Milestone
+## Current Milestone: v2.2 Collaborative Design
 
-Planning next milestone. Run `/gsd:new-milestone` to begin.
+**Goal:** Integrate external AI agents (Codex CLI, Gemini CLI, OpenCode CLI) as co-planners throughout GSD workflows, complementing the existing adversary system.
+
+**Target features:**
+- External agent integration via bash CLI invocation (codex, gemini, opencode)
+- Per-checkpoint configuration — user picks which agent(s) at each touchpoint
+- Co-planning at all workflow stages: research, planning, roadmap, execution review, verification
+- Claude remains orchestrator and final decision-maker — external input is advisory
+- Coexists with adversary system (different roles: co-plan vs challenge)
 
 ## Requirements
 
@@ -46,9 +53,13 @@ Planning next milestone. Run `/gsd:new-milestone` to begin.
 
 ### Active
 
-*Next milestone — TBD*
+*v2.2 Collaborative Design*
 
-(Run `/gsd:new-milestone` to define requirements for next milestone)
+- [ ] External agent CLI integration (codex, gemini, opencode) via bash invocation
+- [ ] Per-checkpoint agent configuration in config.json
+- [ ] Co-planning integration at research, planning, roadmap, execution review, and verification stages
+- [ ] Claude-as-orchestrator synthesis pattern — external input advisory
+- [ ] Coexistence with adversary system at shared checkpoints
 
 ### Out of Scope
 
@@ -88,4 +99,4 @@ Tech stack: Node.js installer, Markdown prompts with YAML frontmatter, JSON conf
 | Adversary opt-out | Enabled by default, missing config = system defaults | ✓ Good |
 
 ---
-*Last updated: 2026-02-13 after v2.1 milestone completion*
+*Last updated: 2026-02-16 after v2.2 milestone started*
