@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 Phase: 6 of 9 (Foundation)
 Plan: — (not yet planned)
 Status: Ready to plan
-Last activity: 2026-02-16 — Roadmap created for v2.2
+Last activity: 2026-02-16 - Completed quick task 1: Fix discuss phase option explanation visibility
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -51,6 +51,12 @@ Key research findings for v2.2:
 ### Blockers/Concerns
 
 None.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Fix discuss phase option explanation visibility | 2026-02-16 | 80b729c | [1-fix-discuss-phase-option-explanation-vis](./quick/1-fix-discuss-phase-option-explanation-vis/) |
 
 ## Session Continuity
 
