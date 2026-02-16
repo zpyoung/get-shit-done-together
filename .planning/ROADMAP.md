@@ -39,11 +39,11 @@ See `.planning/milestones/v2.1-ROADMAP.md` for full details.
   2. User can set `co_planners.enabled: false` in config.json and no external agent invocation occurs anywhere in the workflow
   3. User can invoke an external agent and receive normalized text output regardless of which CLI was used
   4. When an external CLI is missing, times out, or returns an error, the workflow continues with a clear message instead of crashing
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md -- CLI adapter modules (codex, gemini, opencode) and config template
+- [ ] 06-02-PLAN.md -- coplanner command group in gsd-tools.cjs and install verification
 
 ### Phase 7: Configuration
 **Goal**: Users control exactly which external agents participate at which workflow checkpoints
