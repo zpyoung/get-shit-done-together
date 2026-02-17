@@ -252,6 +252,7 @@ function execGit(cwd, args) {
 // ─── Co-Planner Helpers ──────────────────────────────────────────────────────
 
 const SUPPORTED_CLIS = ['codex', 'gemini', 'opencode'];
+const VALID_CHECKPOINTS = ['requirements', 'roadmap', 'plan', 'verification'];
 
 function loadAdapter(cliName) {
   const adapterPath = path.join(__dirname, 'adapters', cliName + '.cjs');
@@ -283,6 +284,65 @@ function checkKillSwitch(cwd) {
   }
 
   return { enabled: false, source: 'default' };
+}
+
+function filterValidAgents(agents, warnings) {
+  var valid = [];
+  for (var i = 0; i < agents.length; i++) {
+    var agent = agents[i];
+    if (typeof agent === 'string' && SUPPORTED_CLIS.includes(agent)) {
+      valid.push(agent);
+    } else {
+      warnings.push('Unknown agent \'' + agent + '\' skipped. Valid: ' + SUPPORTED_CLIS.join(', '));
+    }
+  }
+  return valid;
+}
+
+function getAgentsForCheckpoint(cwd, checkpointName) {
+  var warnings = [];
+
+  // Invalid checkpoint handling (non-null string not in VALID_CHECKPOINTS)
+  if (checkpointName !== null && checkpointName !== undefined && !VALID_CHECKPOINTS.includes(checkpointName)) {
+    return { agents: [], warnings: ['Unknown checkpoint "' + checkpointName + '". Valid: ' + VALID_CHECKPOINTS.join(', ')] };
+  }
+
+  // Check kill switch
+  var killSwitch = checkKillSwitch(cwd);
+  if (!killSwitch.enabled) {
+    return { agents: [], warnings: [] };
+  }
+
+  // Read config
+  try {
+    var configPath = path.join(cwd, '.planning', 'config.json');
+    var rawConfig = fs.readFileSync(configPath, 'utf-8');
+    var parsed = JSON.parse(rawConfig);
+    var coPlanners = parsed.co_planners || {};
+
+    // Fallback chain
+    // 1. Checkpoint-specific (only if checkpointName is non-null)
+    if (checkpointName !== null && checkpointName !== undefined) {
+      var checkpoints = coPlanners.checkpoints || {};
+      var cpConfig = checkpoints[checkpointName];
+      if (cpConfig && Array.isArray(cpConfig.agents) && cpConfig.agents.length > 0) {
+        var validAgents = filterValidAgents(cpConfig.agents, warnings);
+        return { agents: validAgents, warnings: warnings };
+      }
+    }
+
+    // 2. Global agents
+    if (Array.isArray(coPlanners.agents) && coPlanners.agents.length > 0) {
+      var validGlobal = filterValidAgents(coPlanners.agents, warnings);
+      return { agents: validGlobal, warnings: warnings };
+    }
+
+    // 3. Empty — enabled but no agents configured
+    warnings.push('co_planners enabled but no agents configured');
+    return { agents: [], warnings: warnings };
+  } catch (e) {
+    return { agents: [], warnings: [] };
+  }
 }
 
 function normalizePhaseName(phase) {
@@ -4949,6 +5009,20 @@ function cmdCoplannerEnabled(cwd, raw) {
   }
 }
 
+function cmdCoplannerAgents(cwd, checkpointName, raw) {
+  var result = getAgentsForCheckpoint(cwd, checkpointName);
+  if (raw) {
+    if (result.agents.length > 0) {
+      output(result, true, result.agents.join(',') + '\n');
+    } else {
+      var reason = result.warnings.length > 0 ? result.warnings[0] : 'disabled';
+      output(result, true, 'none (' + reason + ')\n');
+    }
+  } else {
+    output(result, false);
+  }
+}
+
 // ─── CLI Router ───────────────────────────────────────────────────────────────
 
 async function main() {
@@ -5374,8 +5448,13 @@ async function main() {
           cmdCoplannerEnabled(cwd, raw);
           break;
         }
+        case 'agents': {
+          var checkpoint = args[2] !== undefined ? args[2] : null;
+          cmdCoplannerAgents(cwd, checkpoint, raw);
+          break;
+        }
         default:
-          error('Unknown coplanner subcommand: ' + subCmd + '. Use: detect, invoke, enabled');
+          error('Unknown coplanner subcommand: ' + subCmd + '. Use: detect, invoke, enabled, agents');
       }
       break;
     }
