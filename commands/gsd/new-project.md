@@ -892,15 +892,13 @@ Display banner:
 
 Set `CO_PLANNER_RAN_REQUIREMENTS=true`.
 
-**For each agent in agents array:**
-
 1. **Read artifact from disk:**
    ```bash
    ARTIFACT_CONTENT=$(cat .planning/REQUIREMENTS.md)
    PROJECT_CONTEXT=$(head -50 .planning/PROJECT.md)
    ```
 
-2. **Construct review prompt and invoke via temp file** (avoids shell quoting issues with multi-line artifact content):
+2. **Write review prompt to temp file and invoke all agents in parallel:**
    ```bash
    PROMPT_FILE=$(mktemp)
    cat > "$PROMPT_FILE" << 'PROMPT_EOF'
@@ -921,71 +919,74 @@ Set `CO_PLANNER_RAN_REQUIREMENTS=true`.
    Requirements to review:
    {ARTIFACT_CONTENT}
    PROMPT_EOF
-   RESULT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs coplanner invoke {agent} --prompt "$(cat "$PROMPT_FILE")")
+   ```
+
+   Replace `{PROJECT_CONTEXT}` and `{ARTIFACT_CONTENT}` with the actual content read in step 1.
+
+   Invoke all agents in parallel:
+   ```bash
+   RESULTS_JSON=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs coplanner invoke-all --checkpoint "requirements" --prompt-file "$PROMPT_FILE")
    rm -f "$PROMPT_FILE"
    ```
 
-   Replace `{PROJECT_CONTEXT}` and `{ARTIFACT_CONTENT}` with the actual content read in step 1. Replace `{agent}` with the current agent name from the loop.
+3. **Failure triage:**
+   Parse `RESULTS_JSON`. Extract `results` array: `[{agent, status, response, error, errorType, duration}]`.
 
-3. **Check for errors:**
-   Parse `RESULT` JSON. If `errorType` is non-null:
+   Count successes and failures from results array.
+
+   - **If ALL failed:** Display `⚠ All co-planners failed. Proceeding with adversary review only.` and skip to Phase 7.5.
+   - **If SOME failed:** Display inline warning at top of output: `⚠ {N} of {M} agents failed ({agent}: {errorType})`
+
+4. **Display per-agent feedback blocks:**
+
+   For each successful result, map agent CLI name to display name: `codex` -> "Codex", `gemini` -> "Gemini CLI", `opencode` -> "OpenCode". Use title case of the CLI name as fallback.
+
+   Parse the response text into Suggestions, Challenges, and Endorsements sections (Claude's natural language understanding -- not programmatic parsing).
+
    ```
-   ⚠ {agent} failed ({errorType}): {error}
-   Continuing with remaining agents...
+   --- {Display Name} Feedback ---
+
+   **Suggestions:**
+   - {extracted from response}
+
+   **Challenges:**
+   - {extracted from response}
+
+   **Endorsements:**
+   - {extracted from response}
+
+   ---
    ```
-   Skip to next agent.
 
-4. **If ALL agents failed:** Display warning and skip to Phase 7.5.
+   If the response has no actionable feedback, note "No actionable feedback" and move on.
+
+5. **Merged Synthesis:**
+
+   Organize all feedback by theme (e.g., "Missing Requirements", "Scope Concerns", "Feasibility Issues") rather than by agent. Use bracket-tag attribution inline after each point: `[Codex]`, `[Gemini CLI]`, `[Codex, OpenCode]`.
+
+   For conflicts between agents, highlight explicitly: `Codex suggested X but OpenCode flagged Y -- {resolution with one-line rationale}`.
+
+   Apply acceptance criteria to each themed feedback item:
+
+   - **Accept** if feedback identifies: a missing requirement implied by PROJECT.md, a concrete contradiction between requirements, a feasibility concern with specific technical evidence, or a gap that would block implementation.
+   - **Reject** if feedback is: stylistic/formatting preference, a scope expansion beyond PROJECT.md intent, speculative ("might need") without evidence, or duplicates an existing requirement.
+   - **Note** if feedback is: valid but deferred to a later phase, or raises a concern already captured in PROJECT.md constraints.
+
+   Apply accepted changes to REQUIREMENTS.md via Write tool (read current content, apply changes, write back). Set `CO_PLANNER_REVISED_REQUIREMENTS=true` if any changes were made.
+
+   **Display accept/reject log:**
+
    ```
-   ⚠ All co-planners failed. Proceeding with adversary review only.
+   ### Merged Synthesis
+
+   | # | Theme | Feedback | Source(s) | Decision | Reasoning |
+   |---|-------|----------|-----------|----------|-----------|
+   | 1 | {theme} | {feedback summary} | [{Agent1}] | Accepted | {why} |
+   | 2 | {theme} | {feedback summary} | [{Agent1}, {Agent2}] | Rejected | {why} |
+   | 3 | {theme} | {feedback summary} | [{Agent2}] | Noted | {why} |
+
+   {N} suggestions accepted, {M} rejected, {P} noted
    ```
-
-**Display per-agent feedback:**
-
-For each successful agent response, map agent CLI name to display name: `codex` -> "Codex", `gemini` -> "Gemini CLI", `opencode` -> "OpenCode". Use title case of the CLI name as fallback.
-
-Parse the response text into Suggestions, Challenges, and Endorsements sections (Claude's natural language understanding -- not programmatic parsing).
-
-```
---- {Display Name} Feedback ---
-
-**Suggestions:**
-- {extracted from response}
-
-**Challenges:**
-- {extracted from response}
-
-**Endorsements:**
-- {extracted from response}
-
----
-```
-
-If the response has no actionable feedback, note "No actionable feedback" and move on.
-
-**Co-Planner Synthesis:**
-
-Review all suggestions and challenges. For each feedback item, apply acceptance criteria:
-
-- **Accept** if feedback identifies: a missing requirement implied by PROJECT.md, a concrete contradiction between requirements, a feasibility concern with specific technical evidence, or a gap that would block implementation.
-- **Reject** if feedback is: stylistic/formatting preference, a scope expansion beyond PROJECT.md intent, speculative ("might need") without evidence, or duplicates an existing requirement.
-- **Note** if feedback is: valid but deferred to a later phase, or raises a concern already captured in PROJECT.md constraints.
-
-Apply accepted changes to REQUIREMENTS.md via Write tool (read current content, apply changes, write back). Set `CO_PLANNER_REVISED_REQUIREMENTS=true` if any changes were made.
-
-**Display accept/reject log:**
-
-```
-### Co-Planner Synthesis
-
-| # | Source | Feedback | Decision | Reasoning |
-|---|--------|----------|----------|-----------|
-| 1 | {agent} | {feedback summary} | Accepted | {why} |
-| 2 | {agent} | {feedback summary} | Rejected | {why} |
-| 3 | {agent} | {feedback summary} | Noted | {why} |
-
-{N} suggestions accepted, {M} rejected, {P} noted
-```
 
 **Conditional commit:**
 
@@ -1296,15 +1297,13 @@ Display banner:
 
 Set `CO_PLANNER_RAN_ROADMAP=true`.
 
-**For each agent in agents array:**
-
 1. **Read artifact from disk:**
    ```bash
    ARTIFACT_CONTENT=$(cat .planning/ROADMAP.md)
    PROJECT_CONTEXT=$(head -50 .planning/PROJECT.md)
    ```
 
-2. **Construct review prompt and invoke via temp file** (avoids shell quoting issues with multi-line artifact content):
+2. **Write review prompt to temp file and invoke all agents in parallel:**
    ```bash
    PROMPT_FILE=$(mktemp)
    cat > "$PROMPT_FILE" << 'PROMPT_EOF'
@@ -1325,71 +1324,74 @@ Set `CO_PLANNER_RAN_ROADMAP=true`.
    Roadmap to review:
    {ARTIFACT_CONTENT}
    PROMPT_EOF
-   RESULT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs coplanner invoke {agent} --prompt "$(cat "$PROMPT_FILE")")
+   ```
+
+   Replace `{PROJECT_CONTEXT}` and `{ARTIFACT_CONTENT}` with the actual content read in step 1.
+
+   Invoke all agents in parallel:
+   ```bash
+   RESULTS_JSON=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs coplanner invoke-all --checkpoint "roadmap" --prompt-file "$PROMPT_FILE")
    rm -f "$PROMPT_FILE"
    ```
 
-   Replace `{PROJECT_CONTEXT}` and `{ARTIFACT_CONTENT}` with the actual content read in step 1. Replace `{agent}` with the current agent name from the loop.
+3. **Failure triage:**
+   Parse `RESULTS_JSON`. Extract `results` array: `[{agent, status, response, error, errorType, duration}]`.
 
-3. **Check for errors:**
-   Parse `RESULT` JSON. If `errorType` is non-null:
+   Count successes and failures from results array.
+
+   - **If ALL failed:** Display `⚠ All co-planners failed. Proceeding with adversary review only.` and skip to Phase 8.5.
+   - **If SOME failed:** Display inline warning at top of output: `⚠ {N} of {M} agents failed ({agent}: {errorType})`
+
+4. **Display per-agent feedback blocks:**
+
+   For each successful result, map agent CLI name to display name: `codex` -> "Codex", `gemini` -> "Gemini CLI", `opencode` -> "OpenCode". Use title case of the CLI name as fallback.
+
+   Parse the response text into Suggestions, Challenges, and Endorsements sections (Claude's natural language understanding -- not programmatic parsing).
+
    ```
-   ⚠ {agent} failed ({errorType}): {error}
-   Continuing with remaining agents...
+   --- {Display Name} Feedback ---
+
+   **Suggestions:**
+   - {extracted from response}
+
+   **Challenges:**
+   - {extracted from response}
+
+   **Endorsements:**
+   - {extracted from response}
+
+   ---
    ```
-   Skip to next agent.
 
-4. **If ALL agents failed:** Display warning and skip to Phase 8.5.
+   If the response has no actionable feedback, note "No actionable feedback" and move on.
+
+5. **Merged Synthesis:**
+
+   Organize all feedback by theme (e.g., "Ordering Concerns", "Scope Issues", "Coverage Gaps", "Risk Distribution") rather than by agent. Use bracket-tag attribution inline after each point: `[Codex]`, `[Gemini CLI]`, `[Codex, OpenCode]`.
+
+   For conflicts between agents, highlight explicitly: `Codex suggested X but OpenCode flagged Y -- {resolution with one-line rationale}`.
+
+   Apply acceptance criteria to each themed feedback item:
+
+   - **Accept** if feedback identifies: a missing requirement implied by PROJECT.md, a concrete contradiction between requirements, a feasibility concern with specific technical evidence, or a gap that would block implementation.
+   - **Reject** if feedback is: stylistic/formatting preference, a scope expansion beyond PROJECT.md intent, speculative ("might need") without evidence, or duplicates an existing requirement.
+   - **Note** if feedback is: valid but deferred to a later phase, or raises a concern already captured in PROJECT.md constraints.
+
+   Apply accepted changes to ROADMAP.md via Write tool (read current content, apply changes, write back). Set `CO_PLANNER_REVISED_ROADMAP=true` if any changes were made.
+
+   **Display accept/reject log:**
+
    ```
-   ⚠ All co-planners failed. Proceeding with adversary review only.
+   ### Merged Synthesis
+
+   | # | Theme | Feedback | Source(s) | Decision | Reasoning |
+   |---|-------|----------|-----------|----------|-----------|
+   | 1 | {theme} | {feedback summary} | [{Agent1}] | Accepted | {why} |
+   | 2 | {theme} | {feedback summary} | [{Agent1}, {Agent2}] | Rejected | {why} |
+   | 3 | {theme} | {feedback summary} | [{Agent2}] | Noted | {why} |
+
+   {N} suggestions accepted, {M} rejected, {P} noted
    ```
-
-**Display per-agent feedback:**
-
-For each successful agent response, map agent CLI name to display name: `codex` -> "Codex", `gemini` -> "Gemini CLI", `opencode` -> "OpenCode". Use title case of the CLI name as fallback.
-
-Parse the response text into Suggestions, Challenges, and Endorsements sections (Claude's natural language understanding -- not programmatic parsing).
-
-```
---- {Display Name} Feedback ---
-
-**Suggestions:**
-- {extracted from response}
-
-**Challenges:**
-- {extracted from response}
-
-**Endorsements:**
-- {extracted from response}
-
----
-```
-
-If the response has no actionable feedback, note "No actionable feedback" and move on.
-
-**Co-Planner Synthesis:**
-
-Review all suggestions and challenges. For each feedback item, apply acceptance criteria:
-
-- **Accept** if feedback identifies: a missing requirement implied by PROJECT.md, a concrete contradiction between requirements, a feasibility concern with specific technical evidence, or a gap that would block implementation.
-- **Reject** if feedback is: stylistic/formatting preference, a scope expansion beyond PROJECT.md intent, speculative ("might need") without evidence, or duplicates an existing requirement.
-- **Note** if feedback is: valid but deferred to a later phase, or raises a concern already captured in PROJECT.md constraints.
-
-Apply accepted changes to ROADMAP.md via Write tool (read current content, apply changes, write back). Set `CO_PLANNER_REVISED_ROADMAP=true` if any changes were made.
-
-**Display accept/reject log:**
-
-```
-### Co-Planner Synthesis
-
-| # | Source | Feedback | Decision | Reasoning |
-|---|--------|----------|----------|-----------|
-| 1 | {agent} | {feedback summary} | Accepted | {why} |
-| 2 | {agent} | {feedback summary} | Rejected | {why} |
-| 3 | {agent} | {feedback summary} | Noted | {why} |
-
-{N} suggestions accepted, {M} rejected, {P} noted
-```
 
 **Conditional commit:**
 
