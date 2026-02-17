@@ -68,12 +68,11 @@ Plans:
   3. Each piece of feedback shows which agent provided it (provenance/attribution)
   4. Claude synthesizes external feedback and makes the final decision -- external input visibly informs but does not dictate the outcome
   5. The draft-review-synthesize pattern works at all four checkpoint types (requirements, roadmap, plan, verification)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: TBD
-- [ ] 08-02: TBD
-- [ ] 08-03: TBD
+- [ ] 08-01-PLAN.md -- Co-planner review at requirements and roadmap checkpoints (new-project.md)
+- [ ] 08-02-PLAN.md -- Co-planner review at plan and verification checkpoints (plan-phase.md, execute-phase.md)
 
 ### Phase 9: Multi-Agent Orchestration
 **Goal**: Multiple external agents review the same artifact in parallel, producing a single merged synthesis with source attribution
@@ -97,5 +96,5 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9
 |-------|-----------|----------------|--------|-----------|
 | 6. Foundation | v2.2 | 2/2 | Complete | 2026-02-17 |
 | 7. Configuration | v2.2 | 1/1 | Complete | 2026-02-17 |
-| 8. Workflow Integration | v2.2 | 0/? | Not started | - |
+| 8. Workflow Integration | v2.2 | 0/2 | Not started | - |
 | 9. Multi-Agent Orchestration | v2.2 | 0/? | Not started | - |
