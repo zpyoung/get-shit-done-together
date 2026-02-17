@@ -1271,6 +1271,137 @@ Success criteria:
 ---
 ```
 
+## Phase 8.3: Co-Planner Review — Roadmap
+
+**Resolve co-planner agents:**
+
+```bash
+CO_AGENTS_JSON=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs coplanner agents "roadmap")
+```
+
+Parse `CO_AGENTS_JSON` as JSON. Extract `agents` array and `warnings` array. Display any warnings.
+
+**If agents array is empty:** Skip to Phase 8.5 (adversary review). No banner, no output.
+
+**If agents array is non-empty:**
+
+Display banner:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► CO-PLANNER REVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+◆ Reviewing roadmap with {N} co-planner(s)...
+```
+
+Set `CO_PLANNER_RAN_ROADMAP=true`.
+
+**For each agent in agents array:**
+
+1. **Read artifact from disk:**
+   ```bash
+   ARTIFACT_CONTENT=$(cat .planning/ROADMAP.md)
+   PROJECT_CONTEXT=$(head -50 .planning/PROJECT.md)
+   ```
+
+2. **Construct review prompt and invoke via temp file** (avoids shell quoting issues with multi-line artifact content):
+   ```bash
+   PROMPT_FILE=$(mktemp)
+   cat > "$PROMPT_FILE" << 'PROMPT_EOF'
+   Review this project roadmap. Focus on:
+   1. ORDERING: Does the phase sequence make sense? Are dependencies respected?
+   2. RISK DISTRIBUTION: Are risky items front-loaded? What happens if an early phase fails?
+   3. SCOPE: Is any phase too large or too small?
+   4. COVERAGE: Do all requirements map to phases?
+
+   Organize your response into three sections:
+   - **Suggestions:** Specific improvements or additions you recommend
+   - **Challenges:** Concerns or potential problems you see
+   - **Endorsements:** What looks good and is well-thought-out
+
+   Project context:
+   {PROJECT_CONTEXT}
+
+   Roadmap to review:
+   {ARTIFACT_CONTENT}
+   PROMPT_EOF
+   RESULT=$(node ~/.claude/get-shit-done/bin/gsd-tools.cjs coplanner invoke {agent} --prompt "$(cat "$PROMPT_FILE")")
+   rm -f "$PROMPT_FILE"
+   ```
+
+   Replace `{PROJECT_CONTEXT}` and `{ARTIFACT_CONTENT}` with the actual content read in step 1. Replace `{agent}` with the current agent name from the loop.
+
+3. **Check for errors:**
+   Parse `RESULT` JSON. If `errorType` is non-null:
+   ```
+   ⚠ {agent} failed ({errorType}): {error}
+   Continuing with remaining agents...
+   ```
+   Skip to next agent.
+
+4. **If ALL agents failed:** Display warning and skip to Phase 8.5.
+   ```
+   ⚠ All co-planners failed. Proceeding with adversary review only.
+   ```
+
+**Display per-agent feedback:**
+
+For each successful agent response, map agent CLI name to display name: `codex` -> "Codex", `gemini` -> "Gemini CLI", `opencode` -> "OpenCode". Use title case of the CLI name as fallback.
+
+Parse the response text into Suggestions, Challenges, and Endorsements sections (Claude's natural language understanding -- not programmatic parsing).
+
+```
+--- {Display Name} Feedback ---
+
+**Suggestions:**
+- {extracted from response}
+
+**Challenges:**
+- {extracted from response}
+
+**Endorsements:**
+- {extracted from response}
+
+---
+```
+
+If the response has no actionable feedback, note "No actionable feedback" and move on.
+
+**Co-Planner Synthesis:**
+
+Review all suggestions and challenges. For each feedback item, apply acceptance criteria:
+
+- **Accept** if feedback identifies: a missing requirement implied by PROJECT.md, a concrete contradiction between requirements, a feasibility concern with specific technical evidence, or a gap that would block implementation.
+- **Reject** if feedback is: stylistic/formatting preference, a scope expansion beyond PROJECT.md intent, speculative ("might need") without evidence, or duplicates an existing requirement.
+- **Note** if feedback is: valid but deferred to a later phase, or raises a concern already captured in PROJECT.md constraints.
+
+Apply accepted changes to ROADMAP.md via Write tool (read current content, apply changes, write back). Set `CO_PLANNER_REVISED_ROADMAP=true` if any changes were made.
+
+**Display accept/reject log:**
+
+```
+### Co-Planner Synthesis
+
+| # | Source | Feedback | Decision | Reasoning |
+|---|--------|----------|----------|-----------|
+| 1 | {agent} | {feedback summary} | Accepted | {why} |
+| 2 | {agent} | {feedback summary} | Rejected | {why} |
+| 3 | {agent} | {feedback summary} | Noted | {why} |
+
+{N} suggestions accepted, {M} rejected, {P} noted
+```
+
+**Conditional commit:**
+
+If ROADMAP.md was revised (`CO_PLANNER_REVISED_ROADMAP = true`):
+```bash
+git add .planning/ROADMAP.md
+git commit -m "$(cat <<'EOF'
+docs: incorporate co-planner feedback (roadmap)
+EOF
+)"
+```
+
 ## Phase 8.5: Adversary Review — Roadmap
 
 **Read adversary config:**
