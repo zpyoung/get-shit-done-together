@@ -81,7 +81,7 @@ pnpm add -D [packages]
 
 ## Sources
 
-- [Context7 library ID] — [topics fetched]
+- [GitMCP repo path or Docfork library] — [topics fetched]
 - [Official docs URL] — [what was verified]
 - [Other source] — [confidence level]
 
