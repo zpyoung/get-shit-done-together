@@ -5023,6 +5023,136 @@ function cmdCoplannerAgents(cwd, checkpointName, raw) {
   }
 }
 
+async function cmdCoplannerInvokeAll(cwd, options, raw) {
+  // 1. Check kill switch
+  const killSwitch = checkKillSwitch(cwd);
+  if (!killSwitch.enabled) {
+    const result = { results: [], skipped: true, reason: 'co-planners disabled' };
+    if (raw) {
+      output(result, true, 'skipped: co-planners disabled (source: ' + killSwitch.source + ')\n');
+    } else {
+      output(result, false);
+    }
+    return;
+  }
+
+  // 2. Read prompt from --prompt-file
+  const promptFile = options.promptFile;
+  if (!promptFile) {
+    error('--prompt-file required');
+    return;
+  }
+  let prompt;
+  try {
+    prompt = fs.readFileSync(promptFile, 'utf-8');
+  } catch (readErr) {
+    error('Cannot read prompt file: ' + readErr.message);
+    return;
+  }
+
+  // 3. Resolve agents list
+  let agents;
+  if (options.agents) {
+    const warnings = [];
+    agents = filterValidAgents(options.agents.split(',').map(function (s) { return s.trim(); }), warnings);
+    if (warnings.length > 0 && raw) {
+      process.stderr.write(warnings.join('\n') + '\n');
+    }
+  } else if (options.checkpoint) {
+    const resolved = getAgentsForCheckpoint(cwd, options.checkpoint);
+    agents = resolved.agents;
+    if (resolved.warnings.length > 0 && raw) {
+      process.stderr.write(resolved.warnings.join('\n') + '\n');
+    }
+  } else {
+    error('At least one of --checkpoint or --agents is required');
+    return;
+  }
+
+  if (!agents || agents.length === 0) {
+    const result = { results: [], reason: 'no agents resolved' };
+    if (raw) {
+      output(result, true, 'no agents resolved\n');
+    } else {
+      output(result, false);
+    }
+    return;
+  }
+
+  // 4. Resolve timeout
+  let timeout = options.timeout;
+  if (!timeout) {
+    try {
+      const configPath = path.join(cwd, '.planning', 'config.json');
+      const rawConfig = fs.readFileSync(configPath, 'utf-8');
+      const parsed = JSON.parse(rawConfig);
+      timeout = (parsed.co_planners && parsed.co_planners.timeout_ms) || 120000;
+    } catch (_) {
+      timeout = 120000;
+    }
+  }
+
+  const model = options.model;
+
+  // 5. Build promises array
+  const promises = agents.map(function (agentName) {
+    const adapter = loadAdapter(agentName);
+    if (!adapter || typeof adapter.invokeAsync !== 'function') {
+      return Promise.resolve({
+        agent: agentName,
+        status: 'error',
+        response: null,
+        error: 'NO_ADAPTER',
+        errorType: 'NO_ADAPTER',
+        duration: 0,
+      });
+    }
+    return adapter.invokeAsync(prompt, { timeout: timeout, model: model }).then(function (result) {
+      return {
+        agent: agentName,
+        status: result.error ? 'error' : 'success',
+        response: result.text,
+        error: result.error || null,
+        errorType: result.errorType || null,
+        duration: result.duration,
+      };
+    });
+  });
+
+  // 6. Invoke all in parallel
+  const settled = await Promise.allSettled(promises);
+
+  // 7. Map settled results
+  const formatted = settled.map(function (r, i) {
+    if (r.status === 'fulfilled') {
+      return r.value;
+    }
+    return {
+      agent: agents[i] || 'unknown',
+      status: 'error',
+      response: null,
+      error: r.reason ? r.reason.message : 'Unknown error',
+      errorType: 'PROMISE_REJECTED',
+      duration: 0,
+    };
+  });
+
+  // 8. Output
+  const result = { results: formatted };
+  if (raw) {
+    const lines = ['Agent      Status   Duration'];
+    for (const entry of formatted) {
+      const name = entry.agent.padEnd(10);
+      const status = entry.status.padEnd(8);
+      const dur = entry.duration + 'ms';
+      lines.push(name + ' ' + status + ' ' + dur);
+    }
+    output(result, true, lines.join('\n') + '\n');
+  } else {
+    output(result, false);
+  }
+}
+
 // ─── CLI Router ───────────────────────────────────────────────────────────────
 
 async function main() {
@@ -5453,8 +5583,28 @@ async function main() {
           cmdCoplannerAgents(cwd, checkpoint, raw);
           break;
         }
+        case 'invoke-all': {
+          const promptFileIdx = args.indexOf('--prompt-file');
+          const promptFile = promptFileIdx !== -1 ? args[promptFileIdx + 1] : null;
+          const checkpointIdx = args.indexOf('--checkpoint');
+          const checkpointVal = checkpointIdx !== -1 ? args[checkpointIdx + 1] : null;
+          const agentsIdx = args.indexOf('--agents');
+          const agentsVal = agentsIdx !== -1 ? args[agentsIdx + 1] : null;
+          const timeoutIdx = args.indexOf('--timeout');
+          const timeoutVal = timeoutIdx !== -1 ? parseInt(args[timeoutIdx + 1], 10) : undefined;
+          const modelIdx = args.indexOf('--model');
+          const modelVal = modelIdx !== -1 ? args[modelIdx + 1] : undefined;
+          await cmdCoplannerInvokeAll(cwd, {
+            promptFile: promptFile,
+            checkpoint: checkpointVal,
+            agents: agentsVal,
+            timeout: timeoutVal,
+            model: modelVal,
+          }, raw);
+          break;
+        }
         default:
-          error('Unknown coplanner subcommand: ' + subCmd + '. Use: detect, invoke, enabled, agents');
+          error('Unknown coplanner subcommand: ' + subCmd + '. Use: detect, invoke, invoke-all, enabled, agents');
       }
       break;
     }
