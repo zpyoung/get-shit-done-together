@@ -4,7 +4,7 @@
 
 - [x] **v2.0 MVP** - Phases 1-? (shipped 2026-01-31)
 - [x] **v2.1 Adversary Agent** - Phases 1-5 (shipped 2026-02-13)
-- [ ] **v2.2 Collaborative Design** - Phases 6-9 (in progress)
+- [ ] **v2.2 Collaborative Design** - Phases 6-11 (in progress)
 
 ## Phases
 
@@ -27,6 +27,8 @@ See `.planning/milestones/v2.1-ROADMAP.md` for full details.
 - [x] **Phase 7: Configuration** - Per-checkpoint agent assignment in config.json (completed 2026-02-17)
 - [x] **Phase 8: Workflow Integration** - Draft-review-synthesize pattern at all workflow checkpoints (completed 2026-02-17)
 - [ ] **Phase 9: Multi-Agent Orchestration** - Parallel review and merged synthesis with attribution
+- [ ] **Phase 10: Settings Fix & Integration Polish** - Wire settings CLI detection, fix stale docs and config init (gap closure)
+- [ ] **Phase 11: Async Error Classification Fix** - Fix classifyError async-path misclassification (gap closure)
 
 ## Phase Details
 
@@ -89,6 +91,32 @@ Plans:
 - [ ] 09-01-PLAN.md -- Async adapter infrastructure and coplanner invoke-all command
 - [ ] 09-02-PLAN.md -- Workflow instruction updates with parallel invocation and theme-based synthesis
 
+### Phase 10: Settings Fix & Integration Polish
+**Goal**: Wire settings CLI detection and fix accumulated integration debt from v2.2 audit
+**Depends on**: Phase 9 (completes v2.2 integration surface)
+**Requirements**: CFG-01 (polish — detection annotation in settings flow)
+**Gap Closure:** Closes gaps from audit — integration #8, flow #1, tech debt (docstring, config init)
+**Success Criteria** (what must be TRUE):
+  1. User can run settings flow and see which co-planner CLIs are installed vs not-installed
+  2. gsd-tools.cjs docstring lists all coplanner subcommands including `agents` and `invoke-all`
+  3. `cmdConfigEnsureSection` initializes `co_planners` section when creating new config
+
+Plans:
+- [ ] 10-01-PLAN.md -- Settings Bash tool fix, docstring update, config init fix
+
+### Phase 11: Async Error Classification Fix
+**Goal**: Fix classifyError to correctly identify NOT_FOUND/PERMISSION errors in the async invocation path
+**Depends on**: Phase 10 (sequential cleanup)
+**Requirements**: CORE-03 (polish — error classification accuracy)
+**Gap Closure:** Closes tech debt from audit — async classifyError exit-127/126 misclassification
+**Success Criteria** (what must be TRUE):
+  1. `invokeAsync` correctly classifies exit code 127 as `NOT_FOUND` (not `EXIT_ERROR`)
+  2. `invokeAsync` correctly classifies exit code 126 as `PERMISSION` (not `EXIT_ERROR`)
+  3. Error metadata from async path matches sync path classification for the same error conditions
+
+Plans:
+- [ ] 11-01-PLAN.md -- Fix async classifyError exit code handling
+
 ## Progress
 
 **Execution Order:**
@@ -100,3 +128,5 @@ Phases execute in numeric order: 6 -> 7 -> 8 -> 9
 | 7. Configuration | v2.2 | 1/1 | Complete | 2026-02-17 |
 | 8. Workflow Integration | v2.2 | 3/3 | Complete | 2026-02-17 |
 | 9. Multi-Agent Orchestration | v2.2 | 0/? | Not started | - |
+| 10. Settings Fix & Integration Polish | v2.2 | 0/1 | Not started | - |
+| 11. Async Error Classification Fix | v2.2 | 0/1 | Not started | - |
