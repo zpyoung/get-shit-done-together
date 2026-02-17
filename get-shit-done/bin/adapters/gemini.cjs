@@ -1,6 +1,6 @@
 'use strict';
 
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -88,4 +88,69 @@ function invoke(prompt, options) {
   }
 }
 
-module.exports = { detect, invoke, CLI_NAME };
+function invokeAsync(prompt, options) {
+  const timeout = (options && options.timeout) || 120000;
+  const model = options && options.model;
+  const tmpFile = path.join(os.tmpdir(), `gsd-${CLI_NAME}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.txt`);
+  const start = Date.now();
+
+  try {
+    fs.writeFileSync(tmpFile, prompt, 'utf-8');
+  } catch (writeErr) {
+    return Promise.resolve({
+      text: null,
+      cli: CLI_NAME,
+      duration: 0,
+      exitCode: 1,
+      error: writeErr.message,
+      errorType: 'WRITE_ERROR',
+    });
+  }
+
+  let cmd = `cat "${tmpFile}" | gemini -p --output-format json`;
+  if (model) {
+    cmd += ` -m "${model}"`;
+  }
+
+  return new Promise(function (resolve) {
+    exec(cmd, {
+      timeout,
+      encoding: 'utf-8',
+      maxBuffer: 10 * 1024 * 1024,
+      env: sanitizeEnv(process.env),
+    }, function (err, stdout) {
+      const duration = Date.now() - start;
+      try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore cleanup errors */ }
+
+      if (err) {
+        resolve({
+          text: null,
+          cli: CLI_NAME,
+          duration,
+          exitCode: err.code || 1,
+          error: err.message,
+          errorType: classifyError(err),
+        });
+      } else {
+        let text;
+        try {
+          const parsed = JSON.parse(stdout);
+          text = parsed.response || stdout.trim();
+        } catch (_) {
+          text = stdout.trim();
+        }
+
+        resolve({
+          text,
+          cli: CLI_NAME,
+          duration,
+          exitCode: 0,
+          error: null,
+          errorType: null,
+        });
+      }
+    });
+  });
+}
+
+module.exports = { detect, invoke, invokeAsync, CLI_NAME };
