@@ -83,10 +83,11 @@ Plans:
   1. User can configure multiple agents at a single checkpoint and all configured agents receive the same artifact for review simultaneously
   2. When multiple agents respond, Claude produces a single synthesized summary that merges all feedback with clear attribution of which agent said what
   3. If one agent fails while others succeed, the synthesis proceeds with available responses and notes the failure
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
+- [ ] 09-01-PLAN.md -- Async adapter infrastructure and coplanner invoke-all command
+- [ ] 09-02-PLAN.md -- Workflow instruction updates with parallel invocation and theme-based synthesis
 
 ## Progress
 
