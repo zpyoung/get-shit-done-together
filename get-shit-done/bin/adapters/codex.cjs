@@ -128,4 +128,4 @@ function invokeAsync(prompt, options) {
   });
 }
 
-module.exports = { detect, invoke, invokeAsync, CLI_NAME };
+module.exports = { detect, invoke, invokeAsync, CLI_NAME, classifyError };
