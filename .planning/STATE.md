@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-16)
 
 ## Current Position
 
-Phase: 8 of 9 (Workflow Integration)
-Plan: 3 of 3
-Status: Phase complete
-Last activity: 2026-02-17 - Completed 08-03 (gap closure for co-planner review sections)
+Phase: 9 of 9 (Multi-Agent Orchestration)
+Plan: 1 of 3
+Status: In progress
+Last activity: 2026-02-17 - Completed 09-01 (async parallel invocation infrastructure)
 
-Progress: [████████░░] 80%
+Progress: [████████░░] 85%
 
 ## Performance Metrics
 
@@ -25,9 +25,9 @@ Progress: [████████░░] 80%
 - Timeline: 12 days (Feb 2 -> Feb 13, 2026)
 
 **v2.2:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 3 min/plan
-- Total execution time: 16 min
+- Total execution time: 18 min
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
@@ -37,6 +37,7 @@ Progress: [████████░░] 80%
 | 08    | 01   | 2min     | 2     | 1     |
 | 08    | 02   | 3min     | 2     | 2     |
 | 08    | 03   | 2min     | 2     | 2     |
+| 09    | 01   | 2min     | 2     | 4     |
 
 ## Accumulated Context
 
@@ -82,6 +83,12 @@ Key decisions from 08-02:
 - Verification checkpoint synthesis uses Edit tool (Edit is in execute-phase.md allowed-tools)
 - Verification co-planner section skips on gaps_found and re_verification, matching adversary skip conditions
 
+Key decisions from 09-01:
+- Used child_process.exec (callback-based async) not execSync-in-Promise -- true parallelism requires non-blocking I/O
+- invokeAsync always resolves (never rejects) -- consistent with sync invoke error schema
+- Temp file includes CLI_NAME + Date.now() + random suffix to prevent collisions during parallel execution
+- invoke-all reads prompt from --prompt-file to avoid shell quoting issues with large artifacts
+
 ### Pending Todos
 
 3 pending todo(s) in `.planning/todos/pending/`:
@@ -103,5 +110,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Phase 8 verified and complete. Ready for Phase 9 planning.
+Stopped at: Completed 09-01-PLAN.md (async parallel invocation infrastructure)
 Resume file: None
