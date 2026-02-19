@@ -1,7 +1,7 @@
 {
 <<<<<<< HEAD
   "name": "get-shit-done-cc",
-  "version": "1.20.4",
+  "version": "1.20.5",
   "description": "A meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode and Gemini by TÂCHES.",
 =======
   "name": "get-shit-done-together",
