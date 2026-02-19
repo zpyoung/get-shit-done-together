@@ -1412,7 +1412,7 @@ function cmdStateUpdateProgress(cwd, raw) {
     }
   }
 
-  const percent = totalPlans > 0 ? Math.round(totalSummaries / totalPlans * 100) : 0;
+  const percent = totalPlans > 0 ? Math.min(100, Math.round(totalSummaries / totalPlans * 100)) : 0;
   const barWidth = 10;
   const filled = Math.round(percent / 100 * barWidth);
   const bar = '\u2588'.repeat(filled) + '\u2591'.repeat(barWidth - filled);
@@ -4029,7 +4029,7 @@ function cmdProgressRender(cwd, format, raw) {
     }
   } catch {}
 
-  const percent = totalPlans > 0 ? Math.round((totalSummaries / totalPlans) * 100) : 0;
+  const percent = totalPlans > 0 ? Math.min(100, Math.round((totalSummaries / totalPlans) * 100)) : 0;
 
   if (format === 'table') {
     // Render markdown table
