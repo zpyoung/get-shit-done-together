@@ -157,6 +157,8 @@ Gray areas are **implementation decisions the user cares about** — things that
 
 <process>
 
+**Express path available:** If you already have a PRD or acceptance criteria document, use `/gsd:plan-phase {phase} --prd path/to/prd.md` to skip this discussion and go straight to planning.
+
 <step name="validate_phase" priority="first">
 Phase number from argument (required). Check for `--research` flag.
 
