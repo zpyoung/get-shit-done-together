@@ -1,8 +1,7 @@
 {
-<<<<<<< HEAD
-  "name": "get-shit-done-cc",
+  "name": "get-shit-done-together",
   "version": "1.20.5",
-  "description": "A meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode and Gemini by T\u00c2CHES.",
+  "description": "A meta-prompting, context engineering and spec-driven development system for Claude Code, OpenCode and Gemini. Originally by T\u00c2CHES, maintained by zpyoung.",
   "bin": {
     "get-shit-done-together": "bin/install.js"
   },
@@ -43,8 +42,7 @@
   },
   "scripts": {
     "build:hooks": "node scripts/build-hooks.js",
-    "prepublishOnly": "pnpm run build:hooks",
-    "dev:local": "pnpm install && pnpm link --global && npx get-shit-done-together",
+    "prepublishOnly": "npm run build:hooks",
     "test": "node --test get-shit-done/bin/gsd-tools.test.js"
   }
 }
