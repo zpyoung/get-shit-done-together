@@ -6,7 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [2.1.0] - 2026-02-16
+## [1.20.5] - 2026-02-19
+
+### Fixed
+- `/gsd:health --repair` now creates timestamped backup before regenerating STATE.md (#657)
+
+### Changed
+- Subagents now discover and load project CLAUDE.md and skills at spawn time for better project context (#671, #672)
+- Improved context loading reliability in spawned agents
+
+## [1.20.4] - 2026-02-17
 
 ### Added
 - **Adversarial Review System** — new `gsd-adversary` agent that challenges artifacts at configurable checkpoints before they proceed to execution
@@ -1111,9 +1120,26 @@ The following changelog entries are from the original [glittercowboy/get-shit-do
 - YOLO mode for autonomous execution
 - Interactive mode with checkpoints
 
-[Unreleased]: https://github.com/zpyoung/get-shit-done-together/compare/v2.1.0...HEAD
-[2.1.0]: https://github.com/zpyoung/get-shit-done-together/compare/v2.0.0...v2.1.0
-[2.0.0]: https://github.com/zpyoung/get-shit-done-together/releases/tag/v2.0.0
+[Unreleased]: https://github.com/glittercowboy/get-shit-done/compare/v1.20.5...HEAD
+[1.20.5]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.20.5
+[1.20.4]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.20.4
+[1.20.3]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.20.3
+[1.20.2]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.20.2
+[1.20.1]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.20.1
+[1.20.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.20.0
+[1.19.2]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.19.2
+[1.19.1]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.19.1
+[1.19.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.19.0
+[1.18.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.18.0
+[1.17.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.17.0
+[1.16.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.16.0
+[1.15.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.15.0
+[1.14.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.14.0
+[1.13.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.13.0
+[1.12.1]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.12.1
+[1.12.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.12.0
+[1.11.2]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.11.2
+[1.11.1]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.11.0
 [1.10.1]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.10.1
 [1.10.0]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.10.0
 [1.9.12]: https://github.com/glittercowboy/get-shit-done/releases/tag/v1.9.12
