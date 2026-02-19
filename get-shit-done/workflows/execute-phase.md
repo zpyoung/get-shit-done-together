@@ -490,7 +490,7 @@ After verification passes and roadmap is updated, return completion status to pa
 ## PHASE COMPLETE
 
 Phase: ${PHASE_NUMBER} - ${PHASE_NAME}
-Plans: ${completed_count}/${total_count}
+Plans: [COMPLETED_PLANS]/[TOTAL_PLANS]  # derive as (plan_count - incomplete_count) / plan_count from init JSON or aggregate_results
 Verification: {Passed | Gaps Found}
 
 [Include aggregate_results output]

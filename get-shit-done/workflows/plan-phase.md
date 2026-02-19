@@ -385,7 +385,7 @@ Task(
 
     <instructions>
     1. Read execute-phase.md from execution_context for your complete workflow
-    2. Follow ALL steps: initialize, handle_branching, validate_phase, discover_and_group_plans, execute_waves, aggregate_results, close_parent_artifacts, verify_phase_goal, update_roadmap
+    2. Follow ALL steps: initialize, handle_branching, validate_phase, discover_and_group_plans, execute_waves, aggregate_results, close_parent_artifacts, verify_phase_goal, update_roadmap, offer_next
     3. The --no-transition flag means: after verification + roadmap update, STOP and return status. Do NOT run transition.md.
     4. When spawning executor agents, use subagent_type='gsd-executor' with the existing @file pattern from the workflow
     5. When spawning verifier agents, use subagent_type='gsd-verifier'
